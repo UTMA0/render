@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Transcript Downloader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f0f0;
+            --text-color: #333333;
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .input-group {
+            display: flex;
+            margin-bottom: 1rem;
+            animation: slideRight 0.5s ease-out;
+        }
+
+        #videoUrl {
+            flex-grow: 1;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: none;
+            background-color: #ecf0f1;
+            border-radius: 4px 0 0 4px;
+            outline: none;
+            transition: background-color 0.3s ease;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #result {
+            white-space: pre-wrap;
+            background-color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .dark-mode-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .dark-mode-toggle:hover {
+            transform: rotate(360deg);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid var(--primary-color);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #copyButton {
+            margin-top: 1rem;
+            background-color: var(--secondary-color);
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        #copyButton:hover {
+            background-color: #27ae60;
+        }
+
+        .dark-mode {
+            --bg-color: #34495e;
+            --text-color: #ecf0f1;
+        }
+
+        .dark-mode .container {
+            background-color: #2c3e50;
+        }
+
+        .dark-mode #videoUrl,
+        .dark-mode #result {
+            background-color: #456789;
+            color: #ecf0f1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideRight {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌓</button>
+    <div class="container">
+        <h1>YouTube Transcript Downloader</h1>
+        <div class="input-group">
+            <input type="text" id="videoUrl" placeholder="Enter YouTube video URL">
+            <button onclick="getTranscript()">Get Transcript</button>
+        </div>
+        <div class="loading" id="loading"></div>
+        <div id="result"></div>
+        <button id="copyButton" onclick="copyTranscript()">Copy Transcript</button>
+    </div>
+
+    <script>
+        async function getTranscript() {
+            const videoUrl = document.getElementById('videoUrl').value;
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+            const copyButton = document.getElementById('copyButton');
+
+            resultDiv.style.display = 'none';
+            copyButton.style.display = 'none';
+            loadingDiv.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/transcript', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ videoUrl }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch transcript');
+                }
+
+                const data = await response.json();
+                resultDiv.textContent = data.transcript;
+                resultDiv.style.display = 'block';
+                copyButton.style.display = 'block';
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.style.display = 'block';
+                copyButton.style.display = 'none';
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            document.querySelector('.dark-mode-toggle').style.animation = 'pulse 0.3s ease-in-out';
+            setTimeout(() => {
+                document.querySelector('.dark-mode-toggle').style.animation = '';
+            }, 300);
+        }
+
+        function copyTranscript() {
+            const resultDiv = document.getElementById('result');
+            const textArea = document.createElement('textarea');
+            textArea.value = resultDiv.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            const copyButton = document.getElementById('copyButton');
+            copyButton.textContent = 'Copied!';
+            copyButton.style.animation = 'pulse 0.3s ease-in-out';
+            
+            setTimeout(() => {
+                copyButton.textContent = 'Copy Transcript';
+                copyButton.style.animation = '';
+            }, 2000);
+        }
+
+        // Add event listener for pressing Enter key in input field
+        document.getElementById('videoUrl').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                getTranscript();
+            }
+        });
+
+        // Add animation to the container on page load
+        window.addEventListener('load', function() {
+            document.querySelector('.container').style.animation = 'fadeIn 0.5s ease-out';
+        });
+
+        // Add hover animation to buttons
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.addEventListener('mouseover', function() {
+                this.style.animation = 'pulse 0.5s infinite';
+            });
+            button.addEventListener('mouseout', function() {
+                this.style.animation = '';
+            });
+        });
+    </script>
+</body>
+</html>
