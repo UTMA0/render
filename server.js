@@ -36,7 +36,7 @@ app.post('/api/transcript', async (req, res) => {
 
         res.json({ transcript: fullTranscript });
     } catch (error) {
-        console.error('Error:', error.message);
+        console.error('Error:', error);
         if (error.message.includes('Could not retrieve a transcript for the video')) {
             res.status(404).json({ error: 'Transcript not available for this video' });
         } else {
