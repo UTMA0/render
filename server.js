@@ -14,7 +14,7 @@ function extractVideoId(url) {
     return (match && match[7].length == 11) ? match[7] : false;
 }
 
-// app.post('/api/transcript', async (req, res) => {
+app.post('/api/transcript', async (req, res) => {
     try {
         const { videoUrl } = req.body;
         
