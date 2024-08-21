@@ -9,9 +9,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "express": "^4.19.2",
     "youtube-transcript": "^1.2.1"
-  }
+  },
+  "description": ""
 }
